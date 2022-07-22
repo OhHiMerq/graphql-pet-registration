@@ -1,58 +1,98 @@
 import { makeExecutableSchema } from '@graphql-tools/schema'
+import type { GraphQLContext } from './context'
+import type { PetAccounts } from '@prisma/client'
 
 const typeDefinitions = /* GraphQL */ `
   type Query {
     info: String!
-    feed: [Link!]!
+    regPets: [Pet!]!
   }
 
   type Mutation {
-    postLink(url: String!, description: String!): Link!
+    postCreatePet(name: String!, breed: String!,sex: String!): Pet!
+    postUpdatePet(id: Int!,name: String, breed: String,sex: String): Pet!
+    postDeletePet(id: Int!): Pet!
   }
 
-  type Link {
+  type Pet {
     id: ID!
-    description: String!
-    url: String!
+    createdAt: String!
+    name: String!
+    breed: String!
+    sex: String!
   } 
 `
-// 1
-type Link = {
+type Pet = {
     id: string
-    url: string
-    description: string
-}
+    createdAt: string
+    name: string
+    breed: string
+    sex: string
+} 
   
 // 2
-const links: Link[] = [
-{
-    id: 'link-0',
-    url: 'https://graphql-yoga.com',
-    description: 'The easiest way of setting up a GraphQL server',
-},
-]
+const pets: Pet[] = []
   
 const resolvers = {
 Query: {
-    info: () => `This is the API of a Hackernews Clone`,
+    info: () => `The goal is to create a one-stop solution for pet owners to identify 
+    and register their pets within a global pet database, help return lost
+    pets to their homes, organize travel, save pet documents and maintain
+    health records, schedule vet visits, communicate, order favorite pet
+    munchies and more!`,
     // 3
-    feed: () => links,
+    regPets: async (parent: unknown,
+        args: {},
+        context: GraphQLContext) => {
+            return context.prisma.petAccounts.findMany()
+        },
 },
 Mutation: {
-    postLink: (parent: unknown, args: { description: string; url: string }) => {
-      // 1
-      let idCount = links.length
+    postCreatePet: async (
+        parent: unknown,
+        args: { name: string, breed: string, sex: string },
+        context: GraphQLContext
+    ) => {
+        const newPet = await context.prisma.petAccounts.create({
+         data:{
+            name: args.name,
+            breed: args.breed,
+            sex: args.sex
+         }   
+        })
 
-      // 2
-      const link: Link = {
-        id: `link-${idCount}`,
-        description: args.description,
-        url: args.url,
-      }
+        return newPet
+    },
 
-      links.push(link)
+    postUpdatePet: async (
+      parent: unknown,
+      args: { id:number, name: string, breed: string, sex: string },
+      context: GraphQLContext
+    ) => {
+        const newPet = await context.prisma.petAccounts.update({
+          where:{
+            id: args.id
+          },
+          data:{
+            name: args.name,
+            breed: args.breed,
+            sex: args.sex
+          }   
+        })
+        return newPet
+    },
 
-      return link
+    postDeletePet: async (
+      parent: unknown,
+      args: { id:number},
+      context: GraphQLContext
+    ) => {
+        const deletedPet = await context.prisma.petAccounts.delete({
+          where:{
+            id: args.id
+          } 
+        })
+        return deletedPet
     }
   }
 }
