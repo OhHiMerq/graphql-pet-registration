@@ -1,0 +1,11 @@
+Query: {
+    regPets: [
+        <Pet> {
+            id: "1"
+            createdAt: "7/22"
+            name: "Hachi"
+            breed: "inu"
+            sex: "male"
+        }
+    ]
+}
